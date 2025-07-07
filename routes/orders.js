@@ -381,7 +381,12 @@ router.put("/:id/cancel", protect, orderController.cancelOrder);
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/admin/all", protect, authorize("admin"), orderController.getAllOrders);
+router.get(
+  "/admin/all",
+  protect,
+  authorize("admin"),
+  orderController.getAllOrders
+);
 
 /**
  * @swagger
@@ -436,6 +441,11 @@ router.get("/admin/all", protect, authorize("admin"), orderController.getAllOrde
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/:id/status", protect, authorize("admin"), orderController.updateOrderStatus);
+router.put(
+  "/:id/status",
+  protect,
+  authorize("admin"),
+  orderController.updateOrderStatus
+);
 
-module.exports = router; 
+module.exports = router;

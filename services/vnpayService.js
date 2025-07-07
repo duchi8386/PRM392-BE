@@ -1,18 +1,14 @@
 const crypto = require("crypto");
 const qs = require("qs");
+const vnpayConfig = require("../config/vnpay");
 
 class VNPayService {
   constructor() {
-    this.vnp_TmnCode = process.env.VNP_TMN_CODE;
-    this.vnp_HashSecret = process.env.VNP_HASH_SECRET;
-    this.vnp_Url =
-      process.env.VNP_URL ||
-      "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    this.vnp_ReturnUrl =
-      process.env.VNP_RETURN_URL ||
-      "http://localhost:5000/api/orders/vnpay-return";
-    this.vnp_IpnUrl =
-      process.env.VNP_IPN_URL || "http://localhost:5000/api/orders/vnpay-ipn";
+    this.vnp_TmnCode = vnpayConfig.vnp_TmnCode;
+    this.vnp_HashSecret = vnpayConfig.vnp_HashSecret;
+    this.vnp_Url = vnpayConfig.vnp_Url;
+    this.vnp_ReturnUrl = vnpayConfig.vnp_ReturnUrl;
+    this.vnp_IpnUrl = vnpayConfig.vnp_IpnUrl;
   }
 
   // Tạo URL thanh toán VNPay

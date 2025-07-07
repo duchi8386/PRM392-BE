@@ -34,11 +34,11 @@ const { protect } = require("../middleware/auth");
  *               email:
  *                 type: string
  *                 format: email
- *                 example: "nguyen.vana@example.com"
+ *                 example: "test@gmail.com"
  *               password:
  *                 type: string
  *                 minLength: 6
- *                 example: "password123"
+ *                 example: "123456"
  *               phone:
  *                 type: string
  *                 example: "0901234567"
@@ -138,10 +138,10 @@ const register = async (req, res) => {
  *               email:
  *                 type: string
  *                 format: email
- *                 example: "nguyen.vana@example.com"
+ *                 example: "test@gmail.com"
  *               password:
  *                 type: string
- *                 example: "password123"
+ *                 example: "123456"
  *     responses:
  *       200:
  *         description: Login successful
@@ -289,4 +289,4 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/me", protect, getMe);
 
-module.exports = router; 
+module.exports = router;

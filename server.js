@@ -47,12 +47,16 @@ app.use(`${API_PREFIX}/cart`, cartRoutes);
 app.use(`${API_PREFIX}/orders`, orderRoutes);
 
 // Swagger Documentation
-if (process.env.SWAGGER_ENABLED !== 'false') {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs, {
-    explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "GenHealth Ecommerce API Documentation",
-  }));
+if (process.env.SWAGGER_ENABLED !== "false") {
+  app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(specs, {
+      explorer: true,
+      customCss: ".swagger-ui .topbar { display: none }",
+      customSiteTitle: "GenHealth Ecommerce API Documentation",
+    })
+  );
 }
 
 // Health check endpoint
@@ -69,7 +73,7 @@ app.get("/", (req, res) => {
       cart: `${API_PREFIX}/cart`,
       orders: `${API_PREFIX}/orders`,
     },
-    documentation: process.env.SWAGGER_ENABLED !== 'false' ? "/api-docs" : null
+    documentation: process.env.SWAGGER_ENABLED !== "false" ? "/api-docs" : null,
   });
 });
 
@@ -109,16 +113,7 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 GenHealth Ecommerce API running on port ${PORT}`);
-  console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-  console.log(`📊 API Base URL: http://localhost:${PORT}${API_PREFIX}`);
-  console.log(`🛍️  Products: http://localhost:${PORT}${API_PREFIX}/products`);
-  console.log(
-    `📂 Categories: http://localhost:${PORT}${API_PREFIX}/categories`
-  );
-  console.log(`🛒 Cart: http://localhost:${PORT}${API_PREFIX}/cart`);
-  console.log(`📦 Orders: http://localhost:${PORT}${API_PREFIX}/orders`);
-  console.log(`🔐 Auth: http://localhost:${PORT}${API_PREFIX}/auth`);
-  if (process.env.SWAGGER_ENABLED !== 'false') {
+  if (process.env.SWAGGER_ENABLED !== "false") {
     console.log(`📖 API Documentation: http://localhost:${PORT}/api-docs`);
   }
 });
@@ -132,7 +127,7 @@ process.on("SIGTERM", () => {
 });
 
 process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down gracefully"); 
+  console.log("SIGINT received, shutting down gracefully");
   server.close(() => {
     console.log("Process terminated");
   });
