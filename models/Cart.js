@@ -28,8 +28,11 @@ const CartSchema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: [true, "User ID là bắt buộc"],
-    unique: true,
+    default: null,
+  },
+  session_id: {
+    type: String,
+    default: null,
   },
   items: [CartItemSchema],
   total_items: {
@@ -45,8 +48,15 @@ const CartSchema = new mongoose.Schema({
   timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
 });
 
+// Ensure either user_id or session_id is provided (not both null)
+CartSchema.index({ user_id: 1 }, { sparse: true, unique: true });
+CartSchema.index({ session_id: 1 }, { sparse: true, unique: true });
+
 // Calculate totals before saving
 CartSchema.pre('save', function() {
+  if (!this.user_id && !this.session_id) {
+    throw new Error('Either user_id or session_id must be provided');
+  }
   this.total_items = this.items.reduce((sum, item) => sum + item.quantity, 0);
   this.total_amount = this.items.reduce((sum, item) => sum + item.total, 0);
 });

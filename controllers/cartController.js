@@ -2,10 +2,32 @@ const cartService = require("../services/cartService");
 
 // @desc    Get user's cart
 // @route   GET /api/cart
-// @access  Private
+// @access  Public (with optional auth)
 exports.getCart = async (req, res) => {
   try {
-    const cart = await cartService.getCart(req.user._id);
+    const userId = req.user?._id;
+    const sessionId = req.sessionId;
+
+    // If user is logged in and has session cart, merge them
+    if (userId && sessionId) {
+      const cart = await cartService.mergeCart(userId, sessionId);
+      return res.status(200).json({
+        success: true,
+        data: cart,
+      });
+    }
+
+    // If user is logged in but no session ID, try auto-merge recent cart
+    if (userId && !sessionId) {
+      const cart = await cartService.autoMergeRecentCart(userId);
+      return res.status(200).json({
+        success: true,
+        data: cart,
+      });
+    }
+
+    // Regular flow: get cart for user or session
+    const cart = await cartService.getCart(userId, sessionId);
 
     res.status(200).json({
       success: true,
@@ -21,7 +43,7 @@ exports.getCart = async (req, res) => {
 
 // @desc    Add item to cart
 // @route   POST /api/cart/add
-// @access  Private
+// @access  Public (with optional auth)
 exports.addToCart = async (req, res) => {
   try {
     const { product_id, quantity = 1 } = req.body;
@@ -33,7 +55,10 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    const cart = await cartService.addToCart(req.user._id, product_id, quantity);
+    const userId = req.user?._id;
+    const sessionId = req.sessionId;
+
+    const cart = await cartService.addToCart(userId, sessionId, product_id, quantity);
 
     res.status(200).json({
       success: true,
@@ -50,7 +75,7 @@ exports.addToCart = async (req, res) => {
 
 // @desc    Update cart item quantity
 // @route   PUT /api/cart/update
-// @access  Private
+// @access  Public (with optional auth)
 exports.updateCartItem = async (req, res) => {
   try {
     const { product_id, quantity } = req.body;
@@ -62,7 +87,10 @@ exports.updateCartItem = async (req, res) => {
       });
     }
 
-    const cart = await cartService.updateCartItem(req.user._id, product_id, quantity);
+    const userId = req.user?._id;
+    const sessionId = req.sessionId;
+
+    const cart = await cartService.updateCartItem(userId, sessionId, product_id, quantity);
 
     res.status(200).json({
       success: true,
@@ -79,10 +107,13 @@ exports.updateCartItem = async (req, res) => {
 
 // @desc    Remove item from cart
 // @route   DELETE /api/cart/remove/:productId
-// @access  Private
+// @access  Public (with optional auth)
 exports.removeFromCart = async (req, res) => {
   try {
-    const cart = await cartService.removeFromCart(req.user._id, req.params.productId);
+    const userId = req.user?._id;
+    const sessionId = req.sessionId;
+
+    const cart = await cartService.removeFromCart(userId, sessionId, req.params.productId);
 
     res.status(200).json({
       success: true,
@@ -99,10 +130,13 @@ exports.removeFromCart = async (req, res) => {
 
 // @desc    Clear entire cart
 // @route   DELETE /api/cart/clear
-// @access  Private
+// @access  Public (with optional auth)
 exports.clearCart = async (req, res) => {
   try {
-    const cart = await cartService.clearCart(req.user._id);
+    const userId = req.user?._id;
+    const sessionId = req.sessionId;
+
+    const cart = await cartService.clearCart(userId, sessionId);
 
     res.status(200).json({
       success: true,
@@ -119,10 +153,13 @@ exports.clearCart = async (req, res) => {
 
 // @desc    Get cart item count
 // @route   GET /api/cart/count
-// @access  Private
+// @access  Public (with optional auth)
 exports.getCartItemCount = async (req, res) => {
   try {
-    const count = await cartService.getCartItemCount(req.user._id);
+    const userId = req.user?._id;
+    const sessionId = req.sessionId;
+
+    const count = await cartService.getCartItemCount(userId, sessionId);
 
     res.status(200).json({
       success: true,

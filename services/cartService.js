@@ -3,13 +3,31 @@ const Product = require("../models/Product"); // Đổi từ "../../models/ecomm
 
 class CartService {
   /**
+   * Get cart identifier based on user or session
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
+   * @returns {Object} - Query object for cart
+   */
+  _getCartQuery(userId, sessionId) {
+    if (userId) {
+      return { user_id: userId };
+    } else if (sessionId) {
+      return { session_id: sessionId };
+    }
+    throw new Error("Either userId or sessionId must be provided");
+  }
+
+  /**
    * Get user's cart
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @returns {Promise<Object>} - User's cart
    */
-  async getCart(userId) {
+  async getCart(userId, sessionId) {
     try {
-      let cart = await Cart.findOne({ user_id: userId })
+      const query = this._getCartQuery(userId, sessionId);
+      
+      let cart = await Cart.findOne(query)
         .populate({
           path: 'items.product_id',
           populate: {
@@ -19,12 +37,19 @@ class CartService {
 
       if (!cart) {
         // Create empty cart if not exists
-        cart = new Cart({
-          user_id: userId,
+        const cartData = {
           items: [],
           total_items: 0,
           total_amount: 0
-        });
+        };
+        
+        if (userId) {
+          cartData.user_id = userId;
+        } else {
+          cartData.session_id = sessionId;
+        }
+        
+        cart = new Cart(cartData);
         await cart.save();
       }
 
@@ -36,12 +61,13 @@ class CartService {
 
   /**
    * Add item to cart
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @param {string} productId - Product ID
    * @param {number} quantity - Quantity to add
    * @returns {Promise<Object>} - Updated cart
    */
-  async addToCart(userId, productId, quantity = 1) {
+  async addToCart(userId, sessionId, productId, quantity = 1) {
     try {
       // Check if product exists and is active
       const product = await Product.findOne({ 
@@ -59,12 +85,21 @@ class CartService {
       }
 
       // Get or create cart
-      let cart = await Cart.findOne({ user_id: userId });
+      const query = this._getCartQuery(userId, sessionId);
+      let cart = await Cart.findOne(query);
+      
       if (!cart) {
-        cart = new Cart({
-          user_id: userId,
+        const cartData = {
           items: []
-        });
+        };
+        
+        if (userId) {
+          cartData.user_id = userId;
+        } else {
+          cartData.session_id = sessionId;
+        }
+        
+        cart = new Cart(cartData);
       }
 
       // Check if product already in cart
@@ -114,12 +149,13 @@ class CartService {
 
   /**
    * Update cart item quantity
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @param {string} productId - Product ID
    * @param {number} quantity - New quantity
    * @returns {Promise<Object>} - Updated cart
    */
-  async updateCartItem(userId, productId, quantity) {
+  async updateCartItem(userId, sessionId, productId, quantity) {
     try {
       if (quantity < 1) {
         throw new Error("Số lượng phải lớn hơn 0");
@@ -140,7 +176,9 @@ class CartService {
         throw new Error("Số lượng sản phẩm không đủ trong kho");
       }
 
-      const cart = await Cart.findOne({ user_id: userId });
+      const query = this._getCartQuery(userId, sessionId);
+      const cart = await Cart.findOne(query);
+      
       if (!cart) {
         throw new Error("Không tìm thấy giỏ hàng");
       }
@@ -176,13 +214,16 @@ class CartService {
 
   /**
    * Remove item from cart
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @param {string} productId - Product ID
    * @returns {Promise<Object>} - Updated cart
    */
-  async removeFromCart(userId, productId) {
+  async removeFromCart(userId, sessionId, productId) {
     try {
-      const cart = await Cart.findOne({ user_id: userId });
+      const query = this._getCartQuery(userId, sessionId);
+      const cart = await Cart.findOne(query);
+      
       if (!cart) {
         throw new Error("Không tìm thấy giỏ hàng");
       }
@@ -209,12 +250,15 @@ class CartService {
 
   /**
    * Clear entire cart
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @returns {Promise<Object>} - Empty cart
    */
-  async clearCart(userId) {
+  async clearCart(userId, sessionId) {
     try {
-      const cart = await Cart.findOne({ user_id: userId });
+      const query = this._getCartQuery(userId, sessionId);
+      const cart = await Cart.findOne(query);
+      
       if (!cart) {
         throw new Error("Không tìm thấy giỏ hàng");
       }
@@ -230,12 +274,14 @@ class CartService {
 
   /**
    * Get cart item count
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @returns {Promise<number>} - Total items in cart
    */
-  async getCartItemCount(userId) {
+  async getCartItemCount(userId, sessionId) {
     try {
-      const cart = await Cart.findOne({ user_id: userId });
+      const query = this._getCartQuery(userId, sessionId);
+      const cart = await Cart.findOne(query);
       return cart ? cart.total_items : 0;
     } catch (error) {
       throw new Error(`Error getting cart item count: ${error.message}`);
@@ -244,12 +290,14 @@ class CartService {
 
   /**
    * Validate cart before checkout
-   * @param {string} userId - User ID
+   * @param {string} userId - User ID (optional)
+   * @param {string} sessionId - Session ID (optional)
    * @returns {Promise<Object>} - Validation result
    */
-  async validateCart(userId) {
+  async validateCart(userId, sessionId) {
     try {
-      const cart = await Cart.findOne({ user_id: userId })
+      const query = this._getCartQuery(userId, sessionId);
+      const cart = await Cart.findOne(query)
         .populate('items.product_id');
 
       if (!cart || cart.items.length === 0) {
@@ -324,6 +372,108 @@ class CartService {
       };
     } catch (error) {
       throw new Error(`Error validating cart: ${error.message}`);
+    }
+  }
+
+  /**
+   * Automatically merge the most recent anonymous cart when user logs in
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} - Merged cart or user cart
+   */
+  async autoMergeRecentCart(userId) {
+    try {
+      console.log('🔍 Auto-merging recent anonymous cart for user:', userId);
+
+      // Find the most recent anonymous cart (within last 24 hours)
+      const recentSessionCart = await Cart.findOne({
+        session_id: { $exists: true },
+        user_id: null,
+        items: { $ne: [] }, // Not empty
+        updated_at: { 
+          $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+        }
+      }).sort({ updated_at: -1 }); // Most recent first
+
+      if (recentSessionCart) {
+        console.log('📦 Found recent session cart:', {
+          sessionId: recentSessionCart.session_id,
+          items: recentSessionCart.items.length,
+          updatedAt: recentSessionCart.updated_at
+        });
+
+        // Use existing merge logic
+        return await this.mergeCart(userId, recentSessionCart.session_id);
+      }
+
+      console.log('ℹ️ No recent anonymous cart found, returning user cart');
+      // No recent session cart, just return user cart
+      return await this.getCart(userId, null);
+    } catch (error) {
+      console.error('❌ autoMergeRecentCart Error:', error.message);
+      // If merge fails, still return user cart
+      return await this.getCart(userId, null);
+    }
+  }
+
+  /**
+   * Merge anonymous cart with user cart when user logs in
+   * @param {string} userId - User ID
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} - Merged cart
+   */
+  async mergeCart(userId, sessionId) {
+    try {
+      const sessionCart = await Cart.findOne({ session_id: sessionId });
+      
+      if (!sessionCart || sessionCart.items.length === 0) {
+        // No session cart or empty, just return/create user cart
+        return await this.getCart(userId, null);
+      }
+
+      // Get or create user cart
+      let userCart = await Cart.findOne({ user_id: userId });
+      
+      if (!userCart) {
+        // Convert session cart to user cart
+        sessionCart.user_id = userId;
+        sessionCart.session_id = undefined;
+        await sessionCart.save();
+        return sessionCart;
+      }
+
+      // Merge carts - add session cart items to user cart
+      for (const sessionItem of sessionCart.items) {
+        const existingItemIndex = userCart.items.findIndex(
+          item => item.product_id.toString() === sessionItem.product_id.toString()
+        );
+
+        if (existingItemIndex > -1) {
+          // Update existing item quantity
+          userCart.items[existingItemIndex].quantity += sessionItem.quantity;
+          userCart.items[existingItemIndex].total = 
+            userCart.items[existingItemIndex].price * userCart.items[existingItemIndex].quantity;
+        } else {
+          // Add new item
+          userCart.items.push(sessionItem);
+        }
+      }
+
+      await userCart.save();
+
+      // Delete session cart
+      await Cart.deleteOne({ session_id: sessionId });
+
+      // Populate and return merged cart
+      await userCart.populate({
+        path: 'items.product_id',
+        populate: {
+          path: 'category_id'
+        }
+      });
+
+      return userCart;
+    } catch (error) {
+      throw new Error(`Error merging cart: ${error.message}`);
     }
   }
 }

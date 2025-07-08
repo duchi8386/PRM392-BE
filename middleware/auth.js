@@ -50,35 +50,49 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// Optional authentication - doesn't require login but populates req.user if token exists
+// Optional authentication middleware for anonymous cart support
 exports.optionalAuth = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    // Set token from Bearer token in header
-    token = req.headers.authorization.split(" ")[1];
-  }
-
-  // If no token, continue without setting req.user
-  if (!token) {
-    return next();
-  }
-
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
-    if (req.user && !req.user.is_active) {
-      req.user = null; // Clear user if account is disabled
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (token) {
+    try {
+      // Try to authenticate if token is provided
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id).select('-password');
+      
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Token hợp lệ nhưng không tìm thấy user'
+        });
+      }
+    } catch (error) {
+      // If token is invalid, continue as anonymous user
+      req.user = null;
     }
-    next();
-  } catch (err) {
-    // If token is invalid, continue without setting req.user
-    next();
   }
+  
+  // Generate or use session ID for anonymous users
+  if (!req.user) {
+    // Get session ID from header or cookie, or generate new one
+    let sessionId = req.headers['x-session-id'] || req.cookies?.cart_session_id;
+    
+    if (!sessionId) {
+      sessionId = require('crypto').randomUUID();
+      
+      // Set cookie for session tracking
+      res.cookie('cart_session_id', sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
+    }
+    
+    req.sessionId = sessionId;
+  }
+  
+  next();
 };
 
 // Grant access to specific roles
