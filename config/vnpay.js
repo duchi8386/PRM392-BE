@@ -6,7 +6,7 @@ module.exports = {
     process.env.VNP_URL || "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
   vnp_ReturnUrl:
     process.env.VNP_RETURN_URL ||
-    "http://localhost:5000/api/orders/vnpay-return",
+    "prm392app://payment/result",
   vnp_IpnUrl:
     process.env.VNP_IPN_URL || "http://localhost:5000/api/orders/vnpay-ipn",
   vnp_ApiUrl:
