@@ -1,9 +1,11 @@
 const express = require("express");
+const http = require("http");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const { specs, swaggerUi } = require("./config/swagger");
+const socketService = require("./config/socket");
 
 // Load env vars
 dotenv.config();
@@ -12,6 +14,10 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+socketService.init(server);
 
 // CORS Configuration
 const corsOptions = {
@@ -39,6 +45,7 @@ const productRoutes = require("./routes/products");
 const categoryRoutes = require("./routes/categories");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/orders");
+const chatRoutes = require("./routes/chat");
 
 // Mount routers với prefix
 const API_PREFIX = process.env.API_PREFIX || "/api";
@@ -47,6 +54,7 @@ app.use(`${API_PREFIX}/products`, productRoutes);
 app.use(`${API_PREFIX}/categories`, categoryRoutes);
 app.use(`${API_PREFIX}/cart`, cartRoutes);
 app.use(`${API_PREFIX}/orders`, orderRoutes);
+app.use(`${API_PREFIX}/chat`, chatRoutes);
 
 // Swagger Documentation
 if (process.env.SWAGGER_ENABLED !== "false") {
@@ -74,6 +82,7 @@ app.get("/", (req, res) => {
       categories: `${API_PREFIX}/categories`,
       cart: `${API_PREFIX}/cart`,
       orders: `${API_PREFIX}/orders`,
+      chat: `${API_PREFIX}/chat`,
     },
     documentation: process.env.SWAGGER_ENABLED !== "false" ? "/api-docs" : null,
   });
@@ -126,8 +135,9 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 GenHealth Ecommerce API running on port ${PORT}`);
+  console.log(`💬 Socket.IO chat system ready`);
   if (process.env.SWAGGER_ENABLED !== "false") {
     console.log(`📖 API Documentation: http://localhost:${PORT}/api-docs`);
   }
