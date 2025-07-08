@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const { specs, swaggerUi } = require("./config/swagger");
 
@@ -23,12 +24,13 @@ const corsOptions = {
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-session-id"],
 };
 
 // Middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(cors(corsOptions));
 
 // Route files
@@ -86,6 +88,19 @@ app.get("/health", (req, res) => {
     version: "1.0.0",
     uptime: process.uptime(),
   });
+});
+
+// JSON parsing error handling
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid JSON format',
+      message: 'Please check your JSON syntax. Common issues: trailing commas, missing quotes, unclosed brackets.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+  next(err);
 });
 
 // Error handling middleware

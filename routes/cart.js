@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/auth");
+const { optionalAuth } = require("../middleware/auth");
 const cartController = require("../controllers/cartController");
 
 /**
@@ -10,17 +10,24 @@ const cartController = require("../controllers/cartController");
  *   description: Shopping cart management
  */
 
-// All cart routes require authentication
-router.use(protect);
+// All cart routes use optional authentication (supports both authenticated and anonymous users)
+router.use(optionalAuth);
 
 /**
  * @swagger
  * /api/cart:
  *   get:
- *     summary: Get user's cart
+ *     summary: Get user's cart (anonymous or authenticated)
  *     tags: [Cart]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-session-id
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Session ID for anonymous cart (optional if authenticated)
  *     responses:
  *       200:
  *         description: User's cart information

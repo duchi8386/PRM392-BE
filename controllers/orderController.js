@@ -46,7 +46,8 @@ const checkout = async (req, res) => {
 const createPaymentUrl = async (req, res) => {
   try {
     const orderId = req.params.id;
-    const ipAddr = req.headers["x-forwarded-for"] ||
+    const ipAddr =
+      req.headers["x-forwarded-for"] ||
       req.connection.remoteAddress ||
       req.socket.remoteAddress ||
       req.ip ||
@@ -80,16 +81,22 @@ const handlePaymentReturn = async (req, res) => {
 
     if (result.success) {
       // Redirect đến trang success của frontend
-      const frontendSuccessUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/order-success?orderId=${result.order._id}`;
+      const frontendSuccessUrl = `${
+        process.env.FRONTEND_URL || "http://localhost:5000"
+      }/order-success?orderId=${result.order._id}`;
       return res.redirect(frontendSuccessUrl);
     } else {
       // Redirect đến trang failed của frontend
-      const frontendFailedUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/order-failed?message=${encodeURIComponent(result.message)}`;
+      const frontendFailedUrl = `${
+        process.env.FRONTEND_URL || "http://localhost:5000"
+      }/order-failed?message=${encodeURIComponent(result.message)}`;
       return res.redirect(frontendFailedUrl);
     }
   } catch (error) {
     console.error("Payment return error:", error);
-    const frontendErrorUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/order-failed?message=${encodeURIComponent("Lỗi xử lý thanh toán")}`;
+    const frontendErrorUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:5000"
+    }/order-failed?message=${encodeURIComponent("Lỗi xử lý thanh toán")}`;
     return res.redirect(frontendErrorUrl);
   }
 };
@@ -101,7 +108,7 @@ const handlePaymentIPN = async (req, res) => {
   try {
     const vnpParams = req.query;
     const result = await orderService.handlePaymentIPN(vnpParams);
-    
+
     res.json(result);
   } catch (error) {
     console.error("Payment IPN error:", error);
@@ -234,8 +241,16 @@ const updateOrderStatus = async (req, res) => {
     const orderId = req.params.id;
     const { status } = req.body;
 
-    const validStatuses = ["pending", "paid", "processing", "shipping", "delivered", "cancelled", "refunded"];
-    
+    const validStatuses = [
+      "pending",
+      "paid",
+      "processing",
+      "shipping",
+      "delivered",
+      "cancelled",
+      "refunded",
+    ];
+
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -281,4 +296,4 @@ module.exports = {
   cancelOrder,
   getAllOrders,
   updateOrderStatus,
-}; 
+};
